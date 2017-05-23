@@ -6,7 +6,13 @@
             "Type": "String",
             "Default": "t2.micro",
             "AllowedValues": ["t2.micro", "m1.small"],
-            "Description": "Instance type to use for the wordpress PHP servers. Use t2.micro or m1.small"
+            "Description": "Instance type to use for the wordpress PHP servers."
+        },
+        "RDSInstanceType": {
+            "Type": "String",
+            "Default": "db.t2.micro",
+            "AllowedValues": ["db.t2.micro", "db.m1.small"],
+            "Description": "Instance type to use for the SQL servers."
         },
         "KeyName": {
             "Type": "String",
@@ -65,6 +71,55 @@
                 "CidrBlock" : {"Ref": "TargetVPCSubnet3CIDR"},
                 "MapPublicIpOnLaunch" : "true",
                 "VpcId" : {"Ref": "ProjectVPC"}
+            }
+        },
+        "InternetGateway" : {
+            "Type" : "AWS::EC2::InternetGateway",
+            "Properties" : {
+            }
+        },
+        "GatewayAttachment" : {
+            "Type" : "AWS::EC2::VPCGatewayAttachment",
+            "Properties" : {
+                "VpcId" : { "Ref" : "VPC" },
+                "InternetGatewayId" : { "Ref" : "InternetGateway" }
+            }
+        },
+        "PublicRouteTable" : {
+            "Type" : "AWS::EC2::RouteTable",
+            "DependsOn" : "GatewayToInternet",
+            "Properties" : {
+                "VpcId" : { "Ref" : "VPC" }
+            }
+        },
+        "PublicRoute" : {
+            "Type" : "AWS::EC2::Route",
+            "DependsOn" : "GatewayToInternet",
+            "Properties" : {
+                "RouteTableId" : { "Ref" : "PublicRouteTable" },
+                "DestinationCidrBlock" : "0.0.0.0/0",
+                "GatewayId" : { "Ref" : "InternetGateway" }
+            }
+        },
+        "VPCSubnet0RouteTableAssociation" : {
+            "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties" : {
+                "SubnetId" : { "Ref" : "VPCSubnet0" },
+                "RouteTableId" : { "Ref" : "PublicRouteTable" }
+            }
+        },
+        "VPCSubnet1RouteTableAssociation" : {
+            "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties" : {
+                "SubnetId" : { "Ref" : "VPCSubnet1" },
+                "RouteTableId" : { "Ref" : "PublicRouteTable" }
+            }
+        },
+        "VPCSubnet2RouteTableAssociation" : {
+            "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties" : {
+                "SubnetId" : { "Ref" : "VPCSubnet2" },
+                "RouteTableId" : { "Ref" : "PublicRouteTable" }
             }
         },
     }
