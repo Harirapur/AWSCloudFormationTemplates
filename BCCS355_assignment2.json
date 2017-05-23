@@ -14,28 +14,68 @@
             "AllowedValues": ["db.t2.micro", "db.m1.small"],
             "Description": "Instance type to use for the SQL servers."
         },
+        "DatabaseName": {
+            "Type": "String",
+            "Default": "wordpressDB",
+            "Description": "The name to use for the database"
+        },
+        "DBUsername": {
+            "Type": "String",
+            "Default": "admin",
+            "Description": "The username to use for the database"
+        },
+        "DBPassword": {
+            "Type": "String",
+            "Default": "admin",
+            "Description": "The password to use for the database"
+        },
         "KeyName": {
             "Type": "String",
+            "Default": "bccs355_1",
             "Description": "Enter the name of an existing key pair to use during the creation of resources"
         },
         "TargetVPCCIDR": {
             "Type": "String",
+            "Default": "10.0.0.0/16",
             "Description": "Enter the CIDR block the new VPC should use\nE.g.: 10.0.0.0/16"
         },
         "TargetVPCSubnet1CIDR": {
             "Type": "String",
+            "Default": "10.0.0.0/24",
             "Description": "Enter the CIDR block the new VPC should use\nE.g.: 10.0.0.0/24"
         },
         "TargetVPCSubnet2CIDR": {
             "Type": "String",
+            "Default": "10.0.1.0/24",
             "Description": "Enter the CIDR block the new VPC should use\nE.g.: 10.0.0.0/24"
         },
         "TargetVPCSubnet3CIDR": {
             "Type": "String",
+            "Default": "10.0.2.0/24",
             "Description": "Enter the CIDR block the new VPC should use\nE.g.: 10.0.0.0/24"
         },
     },
     "Resources": {
+        "AutoScalingInstancesSecurictyGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "GroupDescription": "SSH and HTTP allowed from everywhere",
+                "SecurityGroupIngress": [
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "80",
+                        "ToPort": "80",
+                        "CidrIp": "0.0.0.0/0"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "22",
+                        "ToPort": "822",
+                        "CidrIp": "0.0.0.0/0"
+                    }
+                ]
+            }
+        },
         "ProjectVPC": {
             "Type" : "AWS::EC2::VPC",
             "Properties" : {
@@ -101,25 +141,79 @@
                 "GatewayId" : { "Ref" : "InternetGateway" }
             }
         },
-        "VPCSubnet0RouteTableEntry" : {
+        "VPCSubnet1RouteTableEntry" : {
             "Type" : "AWS::EC2::SubnetRouteTableAssociation",
             "Properties" : {
                 "SubnetId" : { "Ref" : "VPCSubnet1" },
                 "RouteTableId" : { "Ref" : "ProjectRouteTable" }
             }
         },
-        "VPCSubnet1RouteTableEntry" : {
+        "VPCSubnet2RouteTableEntry" : {
             "Type" : "AWS::EC2::SubnetRouteTableAssociation",
             "Properties" : {
                 "SubnetId" : { "Ref" : "VPCSubnet2" },
                 "RouteTableId" : { "Ref" : "ProjectRouteTable" }
             }
         },
-        "VPCSubnet2RouteTableEntry" : {
+        "VPCSubnet3RouteTableEntry" : {
             "Type" : "AWS::EC2::SubnetRouteTableAssociation",
             "Properties" : {
                 "SubnetId" : { "Ref" : "VPCSubnet3" },
                 "RouteTableId" : { "Ref" : "ProjectRouteTable" }
+            }
+        },
+        "LoadBalancer": {
+            "Type" : "AWS::ElasticLoadBalancingV2::LoadBalancer",
+            "Properties" : {
+                "Subnets": [{"Ref": "VPCSubnet1"}, {"Ref": "VPCSubnet2"}, {"Ref": "VPCSubnet3"}]
+            }
+        },
+        "LoadBalancerListener" : {
+            "Type" : "AWS::ElasticLoadBalancingV2::Listener",
+            "Properties" : {
+                "DefaultActions" : [{
+                    "Type" : "forward",
+                    "TargetGroupArn" : { "Ref" : "LoadBalancerTargetGroup" }
+                }],
+                "LoadBalancerArn" : { "Ref" : "LoadBalancer" },
+                "Port" : "80",
+                "Protocol" : "HTTP"
+            }
+        },
+        "LoadBalancerTargetGroup" : {
+            "Type" : "AWS::ElasticLoadBalancingV2::TargetGroup",
+            "Properties" : {
+                "HealthCheckPath" : "/",  
+                "HealthCheckIntervalSeconds" : 15,
+                "HealthCheckTimeoutSeconds" : 5,
+                "HealthyThresholdCount" : 2,
+                "Port" : 80,
+                "Protocol" : "HTTP",
+                "UnhealthyThresholdCount" : 5,
+                "VpcId" : {"Ref" : "ProjectVPC"}
+            }
+        },
+        "EC2AutoScalingGroup" : {
+            "Type" : "AWS::AutoScaling::AutoScalingGroup",
+            "Properties" : {
+                "VPCZoneIdentifier": [{"Ref": "VPCSubnet1"}, {"Ref": "VPCSubnet2"}, {"Ref": "VPCSubnet3"}],
+                "LaunchConfigurationName" : { "Ref" : "LaunchConfig" },
+                "MinSize" : "2",
+                "MaxSize" : "4",
+                "TargetGroupARNs" : [ { "Ref" : "ALBTargetGroup" } ]
+            },
+            "CreationPolicy" : {
+                "ResourceSignal" : {
+                    "Timeout" : "PT15M"
+                }
+            },
+            "UpdatePolicy": {
+                "AutoScalingRollingUpdate": {
+                    "MinInstancesInService": "1",
+                    "MaxBatchSize": "1",
+                    "PauseTime" : "PT15M",
+                    "WaitOnResourceSignals": "true"
+                }
             }
         },
     }
