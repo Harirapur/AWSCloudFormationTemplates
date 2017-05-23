@@ -81,45 +81,45 @@
         "GatewayAttachment" : {
             "Type" : "AWS::EC2::VPCGatewayAttachment",
             "Properties" : {
-                "VpcId" : { "Ref" : "VPC" },
+                "VpcId" : { "Ref" : "ProjectVPC" },
                 "InternetGatewayId" : { "Ref" : "InternetGateway" }
             }
         },
-        "PublicRouteTable" : {
+        "ProjectRouteTable" : {
             "Type" : "AWS::EC2::RouteTable",
-            "DependsOn" : "GatewayToInternet",
+            "DependsOn" : "InternetGateway",
             "Properties" : {
-                "VpcId" : { "Ref" : "VPC" }
+                "VpcId" : { "Ref" : "ProjectVPC" }
             }
         },
         "PublicRoute" : {
             "Type" : "AWS::EC2::Route",
-            "DependsOn" : "GatewayToInternet",
+            "DependsOn" : "InternetGateway",
             "Properties" : {
-                "RouteTableId" : { "Ref" : "PublicRouteTable" },
+                "RouteTableId" : { "Ref" : "ProjectRouteTable" },
                 "DestinationCidrBlock" : "0.0.0.0/0",
                 "GatewayId" : { "Ref" : "InternetGateway" }
             }
         },
-        "VPCSubnet0RouteTableAssociation" : {
-            "Type" : "AWS::EC2::SubnetRouteTableAssociation",
-            "Properties" : {
-                "SubnetId" : { "Ref" : "VPCSubnet0" },
-                "RouteTableId" : { "Ref" : "PublicRouteTable" }
-            }
-        },
-        "VPCSubnet1RouteTableAssociation" : {
+        "VPCSubnet0RouteTableEntry" : {
             "Type" : "AWS::EC2::SubnetRouteTableAssociation",
             "Properties" : {
                 "SubnetId" : { "Ref" : "VPCSubnet1" },
-                "RouteTableId" : { "Ref" : "PublicRouteTable" }
+                "RouteTableId" : { "Ref" : "ProjectRouteTable" }
             }
         },
-        "VPCSubnet2RouteTableAssociation" : {
+        "VPCSubnet1RouteTableEntry" : {
             "Type" : "AWS::EC2::SubnetRouteTableAssociation",
             "Properties" : {
                 "SubnetId" : { "Ref" : "VPCSubnet2" },
-                "RouteTableId" : { "Ref" : "PublicRouteTable" }
+                "RouteTableId" : { "Ref" : "ProjectRouteTable" }
+            }
+        },
+        "VPCSubnet2RouteTableEntry" : {
+            "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties" : {
+                "SubnetId" : { "Ref" : "VPCSubnet3" },
+                "RouteTableId" : { "Ref" : "ProjectRouteTable" }
             }
         },
     }
