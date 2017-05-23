@@ -1,0 +1,71 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "Template to lauch load balanced auto scaling group of EC2 and RDS instances with wordpress installed for Teamtasker Motorsport",
+    "Parameters": {
+        "EC2InstanceType": {
+            "Type": "String",
+            "Default": "t2.micro",
+            "AllowedValues": ["t2.micro", "m1.small"],
+            "Description": "Instance type to use for the wordpress PHP servers. Use t2.micro or m1.small"
+        },
+        "KeyName": {
+            "Type": "String",
+            "Description": "Enter the name of an existing key pair to use during the creation of resources"
+        },
+        "TargetVPCCIDR": {
+            "Type": "String",
+            "Description": "Enter the CIDR block the new VPC should use\nE.g.: 10.0.0.0/16"
+        },
+        "TargetVPCSubnet1CIDR": {
+            "Type": "String",
+            "Description": "Enter the CIDR block the new VPC should use\nE.g.: 10.0.0.0/24"
+        },
+        "TargetVPCSubnet2CIDR": {
+            "Type": "String",
+            "Description": "Enter the CIDR block the new VPC should use\nE.g.: 10.0.0.0/24"
+        },
+        "TargetVPCSubnet3CIDR": {
+            "Type": "String",
+            "Description": "Enter the CIDR block the new VPC should use\nE.g.: 10.0.0.0/24"
+        },
+    },
+    "Resources": {
+        "ProjectVPC": {
+            "Type" : "AWS::EC2::VPC",
+            "Properties" : {
+                "CidrBlock" : {"Ref": "TargetVPCCIDR"},
+                "EnableDnsSupport" : "true",
+                "EnableDnsHostnames" : "true",
+                "InstanceTenancy" : "default",
+                "Tags" : []
+            }
+        },
+        "VPCSubnet1": {
+            "Type" : "AWS::EC2::Subnet",
+            "Properties" : {
+                "AvailabilityZone" : { "Fn::Select" : [ 0, { "Fn::GetAZs" : "" } ] },
+                "CidrBlock" : {"Ref": "TargetVPCSubnet1CIDR"},
+                "MapPublicIpOnLaunch" : "true",
+                "VpcId" : {"Ref": "ProjectVPC"}
+            }
+        },
+        "VPCSubnet2": {
+            "Type" : "AWS::EC2::Subnet",
+            "Properties" : {
+                "AvailabilityZone" : { "Fn::Select" : [ 0, { "Fn::GetAZs" : "" } ] },
+                "CidrBlock" : {"Ref": "TargetVPCSubnet2CIDR"},
+                "MapPublicIpOnLaunch" : "true",
+                "VpcId" : {"Ref": "ProjectVPC"}
+            }
+        },
+        "VPCSubnet3": {
+            "Type" : "AWS::EC2::Subnet",
+            "Properties" : {
+                "AvailabilityZone" : { "Fn::Select" : [ 0, { "Fn::GetAZs" : "" } ] },
+                "CidrBlock" : {"Ref": "TargetVPCSubnet3CIDR"},
+                "MapPublicIpOnLaunch" : "true",
+                "VpcId" : {"Ref": "ProjectVPC"}
+            }
+        },
+    }
+}
