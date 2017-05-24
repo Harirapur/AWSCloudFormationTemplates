@@ -26,6 +26,7 @@ define('DB_NAME', 'wordpress');
 define('DB_USER', 'master');
 
 /** MySQL database password */
+/** I know that everyone will be able to read it once its on github but it only has to last until tonight... */
 define('DB_PASSWORD', 'master12');
 
 /** MySQL hostname */
